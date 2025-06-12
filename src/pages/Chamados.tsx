@@ -65,6 +65,10 @@ export const Chamados: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Cliente</label>
                 <Input placeholder="Digite para buscar cliente" />
               </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Nº de OS</label>
+                <Input placeholder="Digite o número da OS" />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Tipo de Chamado</label>
