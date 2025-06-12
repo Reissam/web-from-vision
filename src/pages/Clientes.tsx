@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,23 +48,17 @@ export const Clientes: React.FC = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Nº do O.S.</label>
-                  <Input placeholder="Número do O.S." />
+                  <label className="text-sm font-medium text-gray-700">Unidade</label>
+                  <Input placeholder="Unidade" />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">Telefone</label>
                   <Input placeholder="(00) 0000-0000" />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Unidade</label>
-                  <Input placeholder="Unidade" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Email</label>
-                  <Input placeholder="contato@empresa.com" />
-                </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Email</label>
+                <Input placeholder="contato@empresa.com" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Endereço</label>
