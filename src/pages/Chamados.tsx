@@ -1,10 +1,11 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Plus, Search, MoreHorizontal } from 'lucide-react';
 
 interface Ticket {
@@ -55,7 +56,7 @@ export const Chamados: React.FC = () => {
               Novo Chamado
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Novo Chamado</DialogTitle>
             </DialogHeader>
@@ -116,6 +117,56 @@ export const Chamados: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Serviço Executado</label>
                 <Textarea placeholder="Descreva o serviço realizado" />
               </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-3 block">Status do Chamado</label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="pendente" />
+                    <Label htmlFor="pendente">Pendente</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="andamento" />
+                    <Label htmlFor="andamento">Em Andamento</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="resolvido" />
+                    <Label htmlFor="resolvido">Resolvido</Label>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">Prioridade do Chamado</label>
+                <Select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a prioridade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="baixa">Baixa</SelectItem>
+                    <SelectItem value="media">Média</SelectItem>
+                    <SelectItem value="alta">Alta</SelectItem>
+                    <SelectItem value="urgente">Urgente</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Hora Chegada</label>
+                  <Input type="time" />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Hora Saída</label>
+                  <Input type="time" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">Data</label>
+                <Input type="date" />
+              </div>
+
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   Cancelar
