@@ -1,0 +1,169 @@
+# Supabase Setup MCP Script
+# Este script automatiza a configuração completa do Supabase
+
+name: "supabase-setup"
+description: "Configuração automatizada do Supabase para o projeto de chamados"
+version: "1.0.0"
+
+# Configurações do projeto
+project:
+  name: "web-from-vision"
+  description: "Sistema de gerenciamento de chamados técnicos"
+
+# Passos de configuração
+steps:
+  - name: "create-supabase-project"
+    description: "Criar novo projeto no Supabase"
+    action: "create_project"
+    params:
+      name: "web-from-vision"
+      region: "us-east-1"
+      database_password: "auto_generate"
+
+  - name: "wait-for-project"
+    description: "Aguardar criação do projeto"
+    action: "wait"
+    params:
+      duration: 30
+
+  - name: "get-credentials"
+    description: "Obter credenciais do projeto"
+    action: "get_credentials"
+    params:
+      project_id: "{{project.id}}"
+
+  - name: "create-tables"
+    description: "Criar tabelas no banco de dados"
+    action: "execute_sql"
+    params:
+      sql: |
+        -- Tabela de Usuários
+        create table if not exists users (
+          id uuid default uuid_generate_v4() primary key,
+          name text not null,
+          email text not null unique,
+          role text not null,
+          department text not null,
+          status text not null,
+          created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+          updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+        );
+
+        -- Tabela de Clientes
+        create table if not exists clients (
+          id uuid default uuid_generate_v4() primary key,
+          name text not null,
+          unit text not null,
+          phone text not null,
+          email text not null,
+          city text not null,
+          state text,
+          cep text,
+          active_tickets integer default 0,
+          created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+          updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+        );
+
+        -- Tabela de Tickets
+        create table if not exists tickets (
+          id uuid default uuid_generate_v4() primary key,
+          client text not null,
+          subject text not null,
+          category text not null,
+          technician text not null,
+          status text not null,
+          date text not null,
+          reported_issue text,
+          confirmed_issue text,
+          service_performed text,
+          priority text,
+          arrival_time text,
+          departure_time text,
+          created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+          updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+        );
+
+  - name: "create-env-file"
+    description: "Criar arquivo .env.local com as credenciais"
+    action: "create_file"
+    params:
+      path: ".env.local"
+      content: |
+        VITE_SUPABASE_URL={{credentials.url}}
+        VITE_SUPABASE_ANON_KEY={{credentials.anon_key}}
+
+  - name: "insert-sample-data"
+    description: "Inserir dados de exemplo"
+    action: "execute_sql"
+    params:
+      sql: |
+        -- Inserir usuários de exemplo
+        insert into users (name, email, role, department, status) values
+        ('João Silva', 'joao.silva@exemplo.com', 'Administrador', 'TI', 'Ativo'),
+        ('Maria Santos', 'maria.santos@exemplo.com', 'Técnico', 'Suporte', 'Ativo'),
+        ('Carlos Oliveira', 'carlos.oliveira@exemplo.com', 'Gestor', 'Financeiro', 'Inativo')
+        on conflict (email) do nothing;
+
+        -- Inserir clientes de exemplo
+        insert into clients (name, unit, phone, email, city, active_tickets) values
+        ('Empresa XYZ', '12.345.678/0001-90', '(11) 3456-7890', 'contato@xyz.com.br', 'São Paulo', 5),
+        ('Empresa ABC', '98.765.432/0001-21', '(11) 2345-6789', 'contato@abc.com.br', 'Rio de Janeiro', 3),
+        ('Empresa DEF', '45.678.901/0001-23', '(31) 3456-7890', 'contato@def.com.br', 'Belo Horizonte', 2)
+        on conflict (email) do nothing;
+
+        -- Inserir tickets de exemplo
+        insert into tickets (client, subject, category, technician, status, date) values
+        ('Empresa XYZ', 'Servidor não responde', 'Hardware', 'Pendente', 'Pendente', '23/08/2023'),
+        ('Empresa ABC', 'Instalação de nova impressora', 'Hardware', 'Em Andamento', 'Em Andamento', '22/08/2023'),
+        ('Empresa DEF', 'Configuração de rede Wi-Fi', 'Rede', 'Resolvido', 'Resolvido', '21/08/2023')
+        on conflict do nothing;
+
+  - name: "setup-rls"
+    description: "Configurar Row Level Security"
+    action: "execute_sql"
+    params:
+      sql: |
+        -- Habilitar RLS nas tabelas
+        alter table users enable row level security;
+        alter table clients enable row level security;
+        alter table tickets enable row level security;
+
+        -- Políticas básicas (permitir todas as operações para desenvolvimento)
+        create policy "Enable all operations for users" on users for all using (true);
+        create policy "Enable all operations for clients" on clients for all using (true);
+        create policy "Enable all operations for tickets" on tickets for all using (true);
+
+# Configurações de segurança
+security:
+  rls_enabled: true
+  policies:
+    - table: "users"
+      policy: "Enable all operations"
+      operation: "all"
+    - table: "clients"
+      policy: "Enable all operations"
+      operation: "all"
+    - table: "tickets"
+      policy: "Enable all operations"
+      operation: "all"
+
+# Validações
+validations:
+  - name: "check-connection"
+    description: "Verificar conexão com o banco"
+    action: "test_connection"
+    
+  - name: "check-tables"
+    description: "Verificar se as tabelas foram criadas"
+    action: "check_tables"
+    params:
+      tables: ["users", "clients", "tickets"]
+
+# Output
+output:
+  project_url: "{{credentials.url}}"
+  dashboard_url: "{{credentials.dashboard_url}}"
+  next_steps:
+    - "Reinicie o servidor de desenvolvimento: npm run dev"
+    - "Acesse o dashboard do Supabase para monitorar os dados"
+    - "Teste as funcionalidades de CRUD na aplicação" 

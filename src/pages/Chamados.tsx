@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -7,27 +7,72 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Plus, Search, MoreHorizontal } from 'lucide-react';
-
-interface Ticket {
-  id: string;
-  client: string;
-  subject: string;
-  category: string;
-  technician: string;
-  status: string;
-  date: string;
-}
+import { supabase, Ticket, Client } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { Combobox } from '@/components/ui/combobox';
 
 export const Chamados: React.FC = () => {
-  const [tickets] = useState<Ticket[]>([
-    { id: '#1254', client: 'Empresa XYZ', subject: 'Servidor não responde', category: 'Hardware', technician: 'Pendente', status: 'Pendente', date: '23/08/2023' },
-    { id: '#1253', client: 'Empresa ABC', subject: 'Instalação de nova impressora', category: 'Hardware', technician: 'Em Andamento', status: 'Em Andamento', date: '22/08/2023' },
-    { id: '#1252', client: 'Empresa DEF', subject: 'Configuração de rede Wi-Fi', category: 'Rede', technician: 'Resolvido', status: 'Resolvido', date: '21/08/2023' },
-    { id: '#1251', client: 'Empresa XYZ', subject: 'Atualização de software ERP', category: 'Software', technician: 'Resolvido', status: 'Resolvido', date: '20/08/2023' },
-    { id: '#1250', client: 'Empresa ABC', subject: 'Problema com email', category: 'Software', technician: 'Pendente', status: 'Pendente', date: '19/08/2023' },
-  ]);
-
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    client: '',
+    osNumber: '',
+    type: '',
+    description: '',
+    technician: '',
+    reportedIssue: '',
+    confirmedIssue: '',
+    servicePerformed: '',
+    status: '',
+    priority: '',
+    arrivalTime: '',
+    departureTime: '',
+    date: ''
+  });
+
+  useEffect(() => {
+    fetchTickets();
+    fetchClients();
+  }, []);
+
+  const fetchTickets = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tickets')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setTickets(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar chamados:', error);
+      toast.error('Erro ao carregar chamados');
+    }
+  };
+
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('name', { ascending: true });
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+      toast.error('Erro ao carregar clientes');
+    }
+  };
+
+  // Converter clientes para formato do Combobox
+  const clientOptions = clients.map(client => ({
+    value: client.name,
+    label: `${client.name} - ${client.city}`
+  }));
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -39,6 +84,106 @@ export const Chamados: React.FC = () => {
         return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const handleViewDetails = (ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    setIsDetailsDialogOpen(true);
+  };
+
+  const handleEdit = (ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    setFormData({
+      client: ticket.client,
+      osNumber: ticket.id.replace('#', ''),
+      type: ticket.category,
+      description: ticket.subject,
+      technician: ticket.technician,
+      reportedIssue: ticket.reported_issue || '',
+      confirmedIssue: ticket.confirmed_issue || '',
+      servicePerformed: ticket.service_performed || '',
+      status: ticket.status,
+      priority: ticket.priority || '',
+      arrivalTime: ticket.arrival_time || '',
+      departureTime: ticket.departure_time || '',
+      date: ticket.date
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleDelete = async (ticket: Ticket) => {
+    if (window.confirm(`Tem certeza que deseja excluir o chamado ${ticket.id}?`)) {
+      try {
+        const { error } = await supabase
+          .from('tickets')
+          .delete()
+          .eq('id', ticket.id);
+
+        if (error) throw error;
+        
+        toast.success('Chamado excluído com sucesso');
+        fetchTickets();
+      } catch (error) {
+        console.error('Erro ao excluir chamado:', error);
+        toast.error('Erro ao excluir chamado');
+      }
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      const ticketData = {
+        client: formData.client,
+        subject: formData.description,
+        category: formData.type,
+        technician: formData.technician,
+        status: formData.status,
+        date: formData.date,
+        reported_issue: formData.reportedIssue,
+        confirmed_issue: formData.confirmedIssue,
+        service_performed: formData.servicePerformed,
+        priority: formData.priority,
+        arrival_time: formData.arrivalTime,
+        departure_time: formData.departureTime,
+        updated_at: new Date().toISOString()
+      };
+
+      if (selectedTicket) {
+        // Atualizar chamado existente
+        const { error } = await supabase
+          .from('tickets')
+          .update(ticketData)
+          .eq('id', selectedTicket.id);
+
+        if (error) throw error;
+        toast.success('Chamado atualizado com sucesso');
+      } else {
+        // Criar novo chamado
+        const { error } = await supabase
+          .from('tickets')
+          .insert([{
+            ...ticketData,
+            created_at: new Date().toISOString()
+          }]);
+
+        if (error) throw error;
+        toast.success('Chamado criado com sucesso');
+      }
+
+      setIsDialogOpen(false);
+      setSelectedTicket(null);
+      fetchTickets();
+    } catch (error) {
+      console.error('Erro ao salvar chamado:', error);
+      toast.error('Erro ao salvar chamado');
     }
   };
 
@@ -58,48 +203,58 @@ export const Chamados: React.FC = () => {
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Novo Chamado</DialogTitle>
+              <DialogTitle>{selectedTicket ? 'Editar Chamado' : 'Novo Chamado'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700">Cliente</label>
-                <Input placeholder="Digite para buscar cliente" />
+                <Combobox
+                  options={clientOptions}
+                  value={formData.client}
+                  onValueChange={(value) => handleInputChange('client', value)}
+                  placeholder="Digite para buscar cliente..."
+                  searchPlaceholder="Buscar cliente..."
+                  emptyText="Nenhum cliente encontrado."
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Nº de OS</label>
-                <Input placeholder="Digite o número da OS" />
+                <Input 
+                  placeholder="Digite o número da OS" 
+                  value={formData.osNumber}
+                  onChange={(e) => handleInputChange('osNumber', e.target.value)}
+                />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Tipo de Chamado</label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hardware">Hardware</SelectItem>
-                      <SelectItem value="software">Software</SelectItem>
-                      <SelectItem value="rede">Rede</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Descrição do Chamado</label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a descrição" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="servidor">Problema com servidor</SelectItem>
-                      <SelectItem value="impressora">Instalação de impressora</SelectItem>
-                      <SelectItem value="email">Problema com email</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              
+              <div>
+                <label className="text-sm font-medium text-gray-700">Tipo de Chamado</label>
+                <Select value={formData.type} onValueChange={(value) => handleInputChange('type', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Hardware">Hardware</SelectItem>
+                    <SelectItem value="Software">Software</SelectItem>
+                    <SelectItem value="Rede">Rede</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Descrição do Chamado</label>
+                <Select value={formData.description} onValueChange={(value) => handleInputChange('description', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a descrição" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="servidor">Problema com servidor</SelectItem>
+                    <SelectItem value="impressora">Instalação de impressora</SelectItem>
+                    <SelectItem value="email">Problema com email</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Técnico Responsável</label>
-                <Select>
+                <Select value={formData.technician} onValueChange={(value) => handleInputChange('technician', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o técnico responsável" />
                   </SelectTrigger>
@@ -109,32 +264,57 @@ export const Chamados: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
+              
               <div>
                 <label className="text-sm font-medium text-gray-700">Defeito Informado</label>
-                <Textarea placeholder="Descreva o problema informado pelo cliente" />
+                <Textarea 
+                  placeholder="Descreva o problema informado pelo cliente"
+                  value={formData.reportedIssue}
+                  onChange={(e) => handleInputChange('reportedIssue', e.target.value)}
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Defeito Constatado</label>
-                <Textarea placeholder="Descreva o problema constatado pelo técnico" />
+                <Textarea 
+                  placeholder="Descreva o problema constatado pelo técnico"
+                  value={formData.confirmedIssue}
+                  onChange={(e) => handleInputChange('confirmedIssue', e.target.value)}
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Serviço Executado</label>
-                <Textarea placeholder="Descreva o serviço realizado" />
+                <Textarea 
+                  placeholder="Descreva o serviço realizado"
+                  value={formData.servicePerformed}
+                  onChange={(e) => handleInputChange('servicePerformed', e.target.value)}
+                />
               </div>
               
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-3 block">Status do Chamado</label>
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="pendente" />
+                    <Checkbox 
+                      id="pendente" 
+                      checked={formData.status === 'Pendente'}
+                      onCheckedChange={(checked) => handleInputChange('status', checked ? 'Pendente' : '')}
+                    />
                     <Label htmlFor="pendente">Pendente</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="andamento" />
+                    <Checkbox 
+                      id="andamento" 
+                      checked={formData.status === 'Em Andamento'}
+                      onCheckedChange={(checked) => handleInputChange('status', checked ? 'Em Andamento' : '')}
+                    />
                     <Label htmlFor="andamento">Em Andamento</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Checkbox id="resolvido" />
+                    <Checkbox 
+                      id="resolvido" 
+                      checked={formData.status === 'Resolvido'}
+                      onCheckedChange={(checked) => handleInputChange('status', checked ? 'Resolvido' : '')}
+                    />
                     <Label htmlFor="resolvido">Resolvido</Label>
                   </div>
                 </div>
@@ -142,7 +322,7 @@ export const Chamados: React.FC = () => {
 
               <div>
                 <label className="text-sm font-medium text-gray-700">Prioridade do Chamado</label>
-                <Select>
+                <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a prioridade" />
                   </SelectTrigger>
@@ -158,24 +338,54 @@ export const Chamados: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Hora Chegada</label>
-                  <Input type="time" />
+                  <Input 
+                    type="time" 
+                    value={formData.arrivalTime}
+                    onChange={(e) => handleInputChange('arrivalTime', e.target.value)}
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">Hora Saída</label>
-                  <Input type="time" />
+                  <Input 
+                    type="time" 
+                    value={formData.departureTime}
+                    onChange={(e) => handleInputChange('departureTime', e.target.value)}
+                  />
                 </div>
               </div>
 
               <div>
                 <label className="text-sm font-medium text-gray-700">Data</label>
-                <Input type="date" />
+                <Input 
+                  type="date" 
+                  value={formData.date}
+                  onChange={(e) => handleInputChange('date', e.target.value)}
+                />
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button variant="outline" onClick={() => {
+                  setIsDialogOpen(false);
+                  setSelectedTicket(null);
+                  setFormData({
+                    client: '',
+                    osNumber: '',
+                    type: '',
+                    description: '',
+                    technician: '',
+                    reportedIssue: '',
+                    confirmedIssue: '',
+                    servicePerformed: '',
+                    status: '',
+                    priority: '',
+                    arrivalTime: '',
+                    departureTime: '',
+                    date: ''
+                  });
+                }}>
                   Cancelar
                 </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSave}>
                   Salvar
                 </Button>
               </div>
@@ -237,9 +447,27 @@ export const Chamados: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{ticket.date}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">Detalhes</Button>
-                      <Button variant="outline" size="sm">Editar</Button>
-                      <Button variant="outline" size="sm">Excluir</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleViewDetails(ticket)}
+                      >
+                        Detalhes
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEdit(ticket)}
+                      >
+                        Editar
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDelete(ticket)}
+                      >
+                        Excluir
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -248,6 +476,60 @@ export const Chamados: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Diálogo de Detalhes */}
+      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Chamado</DialogTitle>
+          </DialogHeader>
+          {selectedTicket && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">ID do Chamado</label>
+                  <p className="text-sm text-gray-900">{selectedTicket.id}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Cliente</label>
+                  <p className="text-sm text-gray-900">{selectedTicket.client}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Assunto</label>
+                  <p className="text-sm text-gray-900">{selectedTicket.subject}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Categoria</label>
+                  <p className="text-sm text-gray-900">{selectedTicket.category}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Técnico</label>
+                  <p className="text-sm text-gray-900">{selectedTicket.technician}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Status</label>
+                  <p className={`text-sm ${getStatusColor(selectedTicket.status)} px-2 py-1 rounded-full inline-block`}>
+                    {selectedTicket.status}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Data</label>
+                <p className="text-sm text-gray-900">{selectedTicket.date}</p>
+              </div>
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setIsDetailsDialogOpen(false)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

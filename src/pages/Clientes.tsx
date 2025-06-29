@@ -1,27 +1,128 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Search } from 'lucide-react';
-
-interface Client {
-  id: string;
-  name: string;
-  unit: string;
-  phone: string;
-  email: string;
-  city: string;
-  activeTickets: number;
-}
+import { supabase, Client } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 export const Clientes: React.FC = () => {
-  const [clients] = useState<Client[]>([
-    { id: '1', name: 'Empresa XYZ', unit: '12.345.678/0001-90', phone: '(11) 3456-7890', email: 'contato@xyz.com.br', city: 'São Paulo', activeTickets: 5 },
-    { id: '2', name: 'Empresa ABC', unit: '98.765.432/0001-21', phone: '(11) 2345-6789', email: 'contato@abc.com.br', city: 'Rio de Janeiro', activeTickets: 3 },
-    { id: '3', name: 'Empresa DEF', unit: '45.678.901/0001-23', phone: '(31) 3456-7890', email: 'contato@def.com.br', city: 'Belo Horizonte', activeTickets: 2 },
-  ]);
-
+  const [clients, setClients] = useState<Client[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    unit: '',
+    phone: '',
+    email: '',
+    city: '',
+    state: '',
+    cep: ''
+  });
+
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setClients(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar clientes:', error);
+      toast.error('Erro ao carregar clientes');
+    }
+  };
+
+  const handleEdit = (client: Client) => {
+    setSelectedClient(client);
+    setFormData({
+      name: client.name,
+      unit: client.unit,
+      phone: client.phone,
+      email: client.email,
+      city: client.city,
+      state: client.state || '',
+      cep: client.cep || ''
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (client: Client) => {
+    if (window.confirm(`Tem certeza que deseja excluir o cliente ${client.name}?`)) {
+      try {
+        const { error } = await supabase
+          .from('clients')
+          .delete()
+          .eq('id', client.id);
+
+        if (error) throw error;
+        
+        toast.success('Cliente excluído com sucesso');
+        fetchClients();
+      } catch (error) {
+        console.error('Erro ao excluir cliente:', error);
+        toast.error('Erro ao excluir cliente');
+      }
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      const clientData = {
+        name: formData.name,
+        unit: formData.unit,
+        phone: formData.phone,
+        email: formData.email,
+        city: formData.city,
+        state: formData.state,
+        cep: formData.cep,
+        active_tickets: 0,
+        updated_at: new Date().toISOString()
+      };
+
+      if (selectedClient) {
+        // Atualizar cliente existente
+        const { error } = await supabase
+          .from('clients')
+          .update(clientData)
+          .eq('id', selectedClient.id);
+
+        if (error) throw error;
+        toast.success('Cliente atualizado com sucesso');
+      } else {
+        // Criar novo cliente
+        const { error } = await supabase
+          .from('clients')
+          .insert([{
+            ...clientData,
+            created_at: new Date().toISOString()
+          }]);
+
+        if (error) throw error;
+        toast.success('Cliente criado com sucesso');
+      }
+
+      setIsDialogOpen(false);
+      setSelectedClient(null);
+      fetchClients();
+    } catch (error) {
+      console.error('Erro ao salvar cliente:', error);
+      toast.error('Erro ao salvar cliente');
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   return (
     <div className="p-6">
@@ -39,50 +140,84 @@ export const Clientes: React.FC = () => {
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Novo Cliente</DialogTitle>
+              <DialogTitle>{selectedClient ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-700">Nome da Empresa</label>
-                <Input placeholder="Nome da empresa" />
+                <Input 
+                  placeholder="Nome da empresa" 
+                  value={formData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Unidade</label>
-                  <Input placeholder="Unidade" />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Telefone</label>
-                  <Input placeholder="(00) 0000-0000" />
-                </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">CNPJ</label>
+                <Input 
+                  placeholder="00.000.000/0000-00" 
+                  value={formData.unit}
+                  onChange={(e) => handleInputChange('unit', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Telefone</label>
+                <Input 
+                  placeholder="(00) 0000-0000" 
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Email</label>
-                <Input placeholder="contato@empresa.com" />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Endereço</label>
-                <Input placeholder="Rua, número, bairro" />
+                <Input 
+                  placeholder="email@exemplo.com" 
+                  value={formData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-700">Cidade</label>
-                  <Input placeholder="Cidade" />
+                  <Input 
+                    placeholder="Cidade" 
+                    value={formData.city}
+                    onChange={(e) => handleInputChange('city', e.target.value)}
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">Estado</label>
-                  <Input placeholder="UF" />
+                  <Input 
+                    placeholder="UF" 
+                    value={formData.state}
+                    onChange={(e) => handleInputChange('state', e.target.value)}
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">CEP</label>
-                  <Input placeholder="00000-000" />
+                  <Input 
+                    placeholder="00000-000" 
+                    value={formData.cep}
+                    onChange={(e) => handleInputChange('cep', e.target.value)}
+                  />
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button variant="outline" onClick={() => {
+                  setIsDialogOpen(false);
+                  setSelectedClient(null);
+                  setFormData({
+                    name: '',
+                    unit: '',
+                    phone: '',
+                    email: '',
+                    city: '',
+                    state: '',
+                    cep: ''
+                  });
+                }}>
                   Cancelar
                 </Button>
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSave}>
                   Salvar
                 </Button>
               </div>
@@ -112,7 +247,7 @@ export const Clientes: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody>
               {clients.map((client) => (
                 <tr key={client.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{client.name}</td>
@@ -123,8 +258,20 @@ export const Clientes: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{client.activeTickets}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">Detalhes</Button>
-                      <Button variant="outline" size="sm">Excluir</Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEdit(client)}
+                      >
+                        Editar
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDelete(client)}
+                      >
+                        Excluir
+                      </Button>
                     </div>
                   </td>
                 </tr>
