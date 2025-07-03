@@ -153,15 +153,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 )}
               </Button>
             </form>
-
-            {/* Demo Credentials */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h3 className="text-sm font-medium text-blue-900 mb-2">Credenciais de Demonstração:</h3>
-              <div className="text-xs text-blue-700 space-y-1">
-                <p><strong>Email:</strong> leumaxreis@gmail.com</p>
-                <p><strong>Senha:</strong> @leumaxqwaszx#</p>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
