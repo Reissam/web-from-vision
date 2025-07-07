@@ -242,16 +242,11 @@ export const Chamados: React.FC = () => {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Descrição do Chamado</label>
-                <Select value={formData.description} onValueChange={(value) => handleInputChange('description', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a descrição" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="servidor">Problema com servidor</SelectItem>
-                    <SelectItem value="impressora">Instalação de impressora</SelectItem>
-                    <SelectItem value="email">Problema com email</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Textarea 
+                  placeholder="Descreva o problema informado pelo cliente"
+                  value={formData.reportedIssue}
+                  onChange={(e) => handleInputChange('reportedIssue', e.target.value)}
+                />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Técnico Responsável</label>
