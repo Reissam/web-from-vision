@@ -233,7 +233,7 @@ export const Chamados: React.FC = () => {
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Hardware">Hardware</SelectItem>
+                    <SelectItem value="Preventiva">Manutenção Preventiva</SelectItem>
                     <SelectItem value="Software">Software</SelectItem>
                     <SelectItem value="Rede">Rede</SelectItem>
                   </SelectContent>
