@@ -234,8 +234,9 @@ export const Chamados: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Preventiva">Manutenção Preventiva</SelectItem>
-                    <SelectItem value="Software">Software</SelectItem>
-                    <SelectItem value="Rede">Rede</SelectItem>
+                    <SelectItem value="Corretiva">Manutenção Corretiva</SelectItem>
+                    <SelectItem value="Instalação">Instalção</SelectItem>
+                    <SelectItem value="Manutenção">Manutenção Corretiva e Preventiva</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
