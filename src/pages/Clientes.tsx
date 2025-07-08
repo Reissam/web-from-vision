@@ -144,25 +144,25 @@ export const Clientes: React.FC = () => {
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-gray-700">Nome da Empresa</label>
+                <label className="text-sm font-medium text-gray-700">Nome do Cliente</label>
                 <Input 
-                  placeholder="Nome da empresa" 
+                  placeholder="Nome do Cliente" 
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">CNPJ</label>
+                <label className="text-sm font-medium text-gray-700">Unidade de Atendimento</label>
                 <Input 
-                  placeholder="00.000.000/0000-00" 
+                  placeholder="Nome da Unidade" 
                   value={formData.unit}
                   onChange={(e) => handleInputChange('unit', e.target.value)}
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700">Telefone</label>
+                <label className="text-sm font-medium text-gray-700">Númro da Agência</label>
                 <Input 
-                  placeholder="(00) 0000-0000" 
+                  placeholder="000000" 
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
                 />
