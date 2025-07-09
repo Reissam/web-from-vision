@@ -14,6 +14,7 @@ import { Combobox } from '@/components/ui/combobox';
 export const Chamados: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
@@ -109,6 +110,11 @@ export const Chamados: React.FC = () => {
       departureTime: ticket.departure_time || '',
       date: ticket.date
     });
+    
+    // Encontrar o cliente selecionado
+    const client = clients.find(c => c.name === ticket.client);
+    setSelectedClient(client || null);
+    
     setIsDialogOpen(true);
   };
 
@@ -117,6 +123,12 @@ export const Chamados: React.FC = () => {
       ...prev,
       [field]: value
     }));
+    
+    // Quando o cliente for alterado, atualizar as informações do cliente
+    if (field === 'client') {
+      const client = clients.find(c => c.name === value);
+      setSelectedClient(client || null);
+    }
   };
 
   const handleDelete = async (ticket: Ticket) => {
@@ -180,11 +192,33 @@ export const Chamados: React.FC = () => {
 
       setIsDialogOpen(false);
       setSelectedTicket(null);
+      setSelectedClient(null);
       fetchTickets();
     } catch (error) {
       console.error('Erro ao salvar chamado:', error);
       toast.error('Erro ao salvar chamado');
     }
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedTicket(null);
+    setSelectedClient(null);
+    setFormData({
+      client: '',
+      osNumber: '',
+      type: '',
+      description: '',
+      technician: '',
+      reportedIssue: '',
+      confirmedIssue: '',
+      servicePerformed: '',
+      status: '',
+      priority: '',
+      arrivalTime: '',
+      departureTime: '',
+      date: ''
+    });
   };
 
   return (
@@ -216,7 +250,36 @@ export const Chamados: React.FC = () => {
                   searchPlaceholder="Buscar cliente..."
                   emptyText="Nenhum cliente encontrado."
                 />
+                
+                {/* Informações do cliente */}
+                {selectedClient && (
+                  <div className="mt-2 p-3 bg-gray-50 rounded-lg border">
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="font-medium text-gray-700">Nome:</span>
+                        <p className="text-gray-900">{selectedClient.name}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Cidade:</span>
+                        <p className="text-gray-900">{selectedClient.city}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Telefone:</span>
+                        <p className="text-gray-900">{selectedClient.phone || 'Não informado'}</p>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">E-mail:</span>
+                        <p className="text-gray-900">{selectedClient.email || 'Não informado'}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="font-medium text-gray-700">Endereço:</span>
+                        <p className="text-gray-900">{selectedClient.address || 'Não informado'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+              
               <div>
                 <label className="text-sm font-medium text-gray-700">Nº de OS</label>
                 <Input 
@@ -360,25 +423,7 @@ export const Chamados: React.FC = () => {
               </div>
 
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => {
-                  setIsDialogOpen(false);
-                  setSelectedTicket(null);
-                  setFormData({
-                    client: '',
-                    osNumber: '',
-                    type: '',
-                    description: '',
-                    technician: '',
-                    reportedIssue: '',
-                    confirmedIssue: '',
-                    servicePerformed: '',
-                    status: '',
-                    priority: '',
-                    arrivalTime: '',
-                    departureTime: '',
-                    date: ''
-                  });
-                }}>
+                <Button variant="outline" onClick={handleCloseDialog}>
                   Cancelar
                 </Button>
                 <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSave}>
