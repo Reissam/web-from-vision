@@ -216,6 +216,67 @@ export const Chamados: React.FC = () => {
                   searchPlaceholder="Buscar cliente..."
                   emptyText="Nenhum cliente encontrado."
                 />
+                
+                {/* Informações do Cliente Selecionado */}
+                {formData.client && clientsData[formData.client] && (
+                  <div className="border rounded-lg p-4 bg-gray-50 mt-4">
+                    <h3 className="text-lg font-semibold mb-3 flex items-center">
+                      <User className="w-5 h-5 mr-2 text-blue-500" />
+                      Informações do Cliente
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center">
+                          <User className="w-4 h-4 mr-2 text-gray-500" />
+                          <span className="font-medium">Nome:</span>
+                          <span className="ml-2">{clientsData[formData.client].nome}</span>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <Mail className="w-4 h-4 mr-2 text-gray-500" />
+                          <span className="font-medium">Email:</span>
+                          <span className="ml-2">{clientsData[formData.client].email}</span>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <Phone className="w-4 h-4 mr-2 text-gray-500" />
+                          <span className="font-medium">Telefone:</span>
+                          <span className="ml-2">{clientsData[formData.client].telefone}</span>
+                        </div>
+                        
+                        <div className="flex items-center">
+                          <Building className="w-4 h-4 mr-2 text-gray-500" />
+                          <span className="font-medium">Empresa:</span>
+                          <span className="ml-2">{clientsData[formData.client].empresa}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-start">
+                          <MapPin className="w-4 h-4 mr-2 text-gray-500 mt-0.5" />
+                          <span className="font-medium">Endereço:</span>
+                          <span className="ml-2">{clientsData[formData.client].endereco}</span>
+                        </div>
+                        
+                        <div>
+                          <span className="font-medium">CNPJ:</span>
+                          <span className="ml-2">{clientsData[formData.client].cnpj}</span>
+                        </div>
+                        
+                        <div>
+                          <span className="font-medium">Contrato:</span>
+                          <span className="ml-2">{clientsData[formData.client].contrato}</span>
+                        </div>
+                        
+                        <div>
+                          <span className="font-medium">Último Chamado:</span>
+                          <span className="ml-2">{clientsData[formData.client].ultimoChamado}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Nº de OS</label>
