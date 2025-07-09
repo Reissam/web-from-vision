@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Plus, Search, MoreHorizontal } from 'lucide-react';
+import { Plus, Search, MoreHorizontal, Printer } from 'lucide-react';
 import { supabase, Ticket, Client } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Combobox } from '@/components/ui/combobox';
@@ -116,6 +116,10 @@ export const Chamados: React.FC = () => {
     setSelectedClient(client || null);
     
     setIsDialogOpen(true);
+  };
+
+  const handlePrint = (ticket: Ticket) => {
+    window.print();
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -508,6 +512,14 @@ export const Chamados: React.FC = () => {
                         onClick={() => handleDelete(ticket)}
                       >
                         Excluir
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handlePrint(ticket)}
+                      >
+                        <Printer size={16} className="mr-1" />
+                        Imprimir
                       </Button>
                     </div>
                   </td>
