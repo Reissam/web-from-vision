@@ -562,23 +562,15 @@ export const Chamados: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Data</label>
                 <p className="text-sm text-gray-900">{selectedTicket.date}</p>
               </div>
-              const AssinaturasEBotoes = () => (
-  <>
-    <div className="flex justify-between mt-6">
-      <div className="flex flex-col items-start">
-        <div className="border-t border-black w-40 mb-1"></div>
-        <span className="text-sm text-gray-700">Assinatura do Técnico</span>
-      </div>
-      <div className="flex flex-col items-end">
-        <div className="border-t border-black w-40 mb-1"></div>
-        <span className="text-sm text-gray-700">Assinatura do Cliente</span>
-      </div>
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setIsDetailsDialogOpen(false)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
-    <div className="flex justify-end gap-2 mt-4">
-      <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-      <Button variant="outline" onClick={() => window.print()}>Imprimir</Button>
-      <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSave}>Salvar</Button>
-    </div>
-  </>
-);
-
+  );
+};
