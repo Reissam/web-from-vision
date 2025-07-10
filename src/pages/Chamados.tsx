@@ -422,7 +422,8 @@ export const Chamados: React.FC = () => {
 </div>
 <div className="space-y-4 print-area">
   {/* ... campos anteriores do formulário ... */}
-
+  {/* Espaço extra antes das assinaturas */}
+  <div className="mt-12" />
   {/* Áreas de assinatura */}
 <div className="grid grid-cols-2 gap-4 mt-12">
   <div className="flex flex-col items-center">
@@ -435,7 +436,7 @@ export const Chamados: React.FC = () => {
   </div>
 </div>
 
-<div className="flex justify-end gap-2 mt-10">
+<div className="flex justify-end gap-2 mt-10 no-print">
   <Button variant="outline" onClick={() => window.print()}>
     Imprimir
   </Button>
