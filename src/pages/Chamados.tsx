@@ -450,9 +450,8 @@ export const Chamados: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
-
-      <div className="bg-white rounded-lg border border-border">
+    
+          <div className="bg-white rounded-lg border border-border">
         <div className="p-4 border-b border-border">
           <div className="flex gap-4">
             <div className="flex-1">
