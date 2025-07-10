@@ -40,21 +40,32 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Ajustes de impressão */
 @media print {
   body {
-    margin: 0;
-    padding: 2cm;
-    width: 21cm;
-    height: 29.7cm;
-    background: white;
+    width: 210mm;      /* Largura da A4 */
+    height: 297mm;     /* Altura da A4 */
+    margin: 10mm auto; /* Margem para caber bem na página */
+    padding: 0;
+    box-sizing: border-box;
   }
 
+  .print-area {
+    page-break-after: avoid;
+    page-break-before: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Oculta botões e elementos desnecessários na impressão */
   .no-print {
     display: none !important;
   }
 
-  .print-area {
-    width: 100%;
-    font-size: 12px; /* opcional, ajuda a caber melhor no A4 */
+  /* Ajusta tamanho das fontes e espaçamentos se quiser */
+  .print-area * {
+    font-size: 12pt;
   }
 }
+feat: ajustes para impressão em A4 e ocultar botões na impressão
+
