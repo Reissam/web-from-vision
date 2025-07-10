@@ -420,8 +420,10 @@ export const Chamados: React.FC = () => {
     onChange={(e) => handleInputChange('date', e.target.value)}
   />
 </div>
+<div className="space-y-4 print-area">
+  {/* ... campos anteriores do formulário ... */}
 
-{/* Áreas de assinatura */}
+  {/* Áreas de assinatura */}
 <div className="grid grid-cols-2 gap-4 mt-6">
   <div className="flex flex-col items-center">
     <div className="w-full border-t border-gray-400 mb-1"></div>
