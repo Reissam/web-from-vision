@@ -40,3 +40,21 @@
 .read-the-docs {
   color: #888;
 }
+@media print {
+  body {
+    margin: 0;
+    padding: 2cm;
+    width: 21cm;
+    height: 29.7cm;
+    background: white;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-area {
+    width: 100%;
+    font-size: 12px; /* opcional, ajuda a caber melhor no A4 */
+  }
+}
