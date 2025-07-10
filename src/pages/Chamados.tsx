@@ -424,7 +424,7 @@ export const Chamados: React.FC = () => {
   {/* ... campos anteriores do formulário ... */}
 
   {/* Áreas de assinatura */}
-<div className="grid grid-cols-2 gap-4 mt-6">
+<div className="grid grid-cols-2 gap-4 mt-12">
   <div className="flex flex-col items-center">
     <div className="w-full border-t border-gray-400 mb-1"></div>
     <span className="text-xs text-gray-600">Assinatura do Técnico</span>
