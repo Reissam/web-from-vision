@@ -422,7 +422,7 @@ export const Chamados: React.FC = () => {
 </div>
 
 {/* Áreas de assinatura */}
-<div className="grid grid-cols-2 gap-4 mt-12">
+<div className="grid grid-cols-2 gap-4 mt-6">
   <div className="flex flex-col items-center">
     <div className="w-full border-t border-gray-400 mb-1"></div>
     <span className="text-xs text-gray-600">Assinatura do Técnico</span>
@@ -433,7 +433,7 @@ export const Chamados: React.FC = () => {
   </div>
 </div>
 
-<div className="flex justify-end gap-2 mt-6">
+<div className="flex justify-end gap-2 mt-10">
   <Button variant="outline" onClick={() => window.print()}>
     Imprimir
   </Button>
