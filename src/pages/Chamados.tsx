@@ -303,7 +303,7 @@ export default function Chamados() {
                 </Select>
               </div>
               
-              {/* Campo 1: Descrição do Chamado (usado para 'subject') */}
+              {/* Campo 1: Descrição do Chamado (campo independente) */}
               <div>
                 <label className="text-sm font-medium text-gray-700">Descrição do Chamado</label>
                 <Textarea 
