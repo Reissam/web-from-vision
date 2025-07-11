@@ -88,7 +88,7 @@ const Combobox = ({ options, value, onValueChange, placeholder }) => {
   );
 };
 
-export default function Chamados() {
+export const Chamados = () => {
   const [tickets, setTickets] = useState(mockTickets);
   const [clients, setClients] = useState(mockClients);
   const [selectedClient, setSelectedClient] = useState(null);
