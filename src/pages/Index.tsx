@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Dashboard } from './Dashboard';
-import Chamados from './Chamados';
-import Clientes from './Clientes';
-import Usuarios from './Usuarios';
+import { Chamados } from './Chamados';
+import { Clientes } from './Clientes';
+import { Usuarios } from './Usuarios';
 import { Login } from './Login';
 import { Button } from '@/components/ui/button';
 import { LogOut, User } from 'lucide-react';
