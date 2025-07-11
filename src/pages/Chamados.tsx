@@ -7,16 +7,93 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Plus, Search, MoreHorizontal } from 'lucide-react';
-import { supabase, Ticket, Client } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { Combobox } from '@/components/ui/combobox';
 
-export const Chamados: React.FC = () => {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+// Mock data para demonstração
+const mockTickets = [
+  {
+    id: '#001',
+    client: 'João Silva',
+    subject: 'Problema na impressora',
+    category: 'Corretiva',
+    technician: 'João Silva',
+    status: 'Pendente',
+    date: '2024-01-15',
+    reported_issue: 'Impressora não está imprimindo',
+    confirmed_issue: 'Cartucho de tinta vazio',
+    service_performed: 'Substituição do cartucho',
+    priority: 'media',
+    arrival_time: '09:00',
+    departure_time: '10:30'
+  },
+  {
+    id: '#002',
+    client: 'Maria Santos',
+    subject: 'Manutenção preventiva',
+    category: 'Preventiva',
+    technician: 'Maria Santos',
+    status: 'Em Andamento',
+    date: '2024-01-16',
+    reported_issue: 'Manutenção programada',
+    confirmed_issue: 'Limpeza necessária',
+    service_performed: 'Limpeza completa do equipamento',
+    priority: 'baixa',
+    arrival_time: '14:00',
+    departure_time: '16:00'
+  }
+];
+
+const mockClients = [
+  { id: 1, name: 'João Silva', city: 'São Paulo', phone: '(11) 99999-9999', email: 'joao@email.com', address: 'Rua A, 123' },
+  { id: 2, name: 'Maria Santos', city: 'Rio de Janeiro', phone: '(21) 88888-8888', email: 'maria@email.com', address: 'Rua B, 456' }
+];
+
+// Componente Combobox simplificado
+const Combobox = ({ options, value, onValueChange, placeholder }) => {
+  const [open, setOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+
+  const filteredOptions = options.filter(option =>
+    option.label.toLowerCase().includes(searchValue.toLowerCase())
+  );
+
+  return (
+    <div className="relative">
+      <Input
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => {
+          setSearchValue(e.target.value);
+          onValueChange(e.target.value);
+        }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 200)}
+      />
+      {open && filteredOptions.length > 0 && (
+        <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md shadow-lg z-10 max-h-40 overflow-y-auto">
+          {filteredOptions.map((option) => (
+            <div
+              key={option.value}
+              className="p-2 hover:bg-gray-100 cursor-pointer"
+              onClick={() => {
+                onValueChange(option.value);
+                setOpen(false);
+              }}
+            >
+              {option.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default function Chamados() {
+  const [tickets, setTickets] = useState(mockTickets);
+  const [clients, setClients] = useState(mockClients);
+  const [selectedClient, setSelectedClient] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     client: '',
@@ -34,48 +111,13 @@ export const Chamados: React.FC = () => {
     date: ''
   });
 
-  useEffect(() => {
-    fetchTickets();
-    fetchClients();
-  }, []);
-
-  const fetchTickets = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('tickets')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setTickets(data || []);
-    } catch (error) {
-      console.error('Erro ao buscar chamados:', error);
-      toast.error('Erro ao carregar chamados');
-    }
-  };
-
-  const fetchClients = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('clients')
-        .select('*')
-        .order('name', { ascending: true });
-
-      if (error) throw error;
-      setClients(data || []);
-    } catch (error) {
-      console.error('Erro ao buscar clientes:', error);
-      toast.error('Erro ao carregar clientes');
-    }
-  };
-
   // Converter clientes para formato do Combobox
   const clientOptions = clients.map(client => ({
     value: client.name,
     label: `${client.name} - ${client.city}`
   }));
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch (status) {
       case 'Pendente':
         return 'bg-orange-100 text-orange-800';
@@ -88,12 +130,12 @@ export const Chamados: React.FC = () => {
     }
   };
 
-  const handleViewDetails = (ticket: Ticket) => {
+  const handleViewDetails = (ticket) => {
     setSelectedTicket(ticket);
     setIsDetailsDialogOpen(true);
   };
 
-  const handleEdit = (ticket: Ticket) => {
+  const handleEdit = (ticket) => {
     setSelectedTicket(ticket);
     setFormData({
       client: ticket.client,
@@ -118,7 +160,7 @@ export const Chamados: React.FC = () => {
     setIsDialogOpen(true);
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -131,73 +173,19 @@ export const Chamados: React.FC = () => {
     }
   };
 
-  const handleDelete = async (ticket: Ticket) => {
+  const handleDelete = (ticket) => {
     if (window.confirm(`Tem certeza que deseja excluir o chamado ${ticket.id}?`)) {
-      try {
-        const { error } = await supabase
-          .from('tickets')
-          .delete()
-          .eq('id', ticket.id);
-
-        if (error) throw error;
-        
-        toast.success('Chamado excluído com sucesso');
-        fetchTickets();
-      } catch (error) {
-        console.error('Erro ao excluir chamado:', error);
-        toast.error('Erro ao excluir chamado');
-      }
+      setTickets(tickets.filter(t => t.id !== ticket.id));
     }
   };
 
-  const handleSave = async () => {
-    try {
-      const ticketData = {
-        client: formData.client,
-        subject: formData.description,
-        category: formData.type,
-        technician: formData.technician,
-        status: formData.status,
-        date: formData.date,
-        reported_issue: formData.reportedIssue,
-        confirmed_issue: formData.confirmedIssue,
-        service_performed: formData.servicePerformed,
-        priority: formData.priority,
-        arrival_time: formData.arrivalTime,
-        departure_time: formData.departureTime,
-        updated_at: new Date().toISOString()
-      };
-
-      if (selectedTicket) {
-        // Atualizar chamado existente
-        const { error } = await supabase
-          .from('tickets')
-          .update(ticketData)
-          .eq('id', selectedTicket.id);
-
-        if (error) throw error;
-        toast.success('Chamado atualizado com sucesso');
-      } else {
-        // Criar novo chamado
-        const { error } = await supabase
-          .from('tickets')
-          .insert([{
-            ...ticketData,
-            created_at: new Date().toISOString()
-          }]);
-
-        if (error) throw error;
-        toast.success('Chamado criado com sucesso');
-      }
-
-      setIsDialogOpen(false);
-      setSelectedTicket(null);
-      setSelectedClient(null);
-      fetchTickets();
-    } catch (error) {
-      console.error('Erro ao salvar chamado:', error);
-      toast.error('Erro ao salvar chamado');
-    }
+  const handleSave = () => {
+    // Simular salvamento
+    console.log('Salvando chamado:', formData);
+    setIsDialogOpen(false);
+    setSelectedTicket(null);
+    setSelectedClient(null);
+    handleCloseDialog();
   };
 
   const handleCloseDialog = () => {
@@ -247,8 +235,6 @@ export const Chamados: React.FC = () => {
                   value={formData.client}
                   onValueChange={(value) => handleInputChange('client', value)}
                   placeholder="Digite para buscar cliente..."
-                  searchPlaceholder="Buscar cliente..."
-                  emptyText="Nenhum cliente encontrado."
                 />
                 
                 {/* Informações do cliente */}
@@ -298,19 +284,12 @@ export const Chamados: React.FC = () => {
                   <SelectContent>
                     <SelectItem value="Preventiva">Manutenção Preventiva</SelectItem>
                     <SelectItem value="Corretiva">Manutenção Corretiva</SelectItem>
-                    <SelectItem value="Instalação">Instalção</SelectItem>
+                    <SelectItem value="Instalação">Instalação</SelectItem>
                     <SelectItem value="Manutenção">Manutenção Corretiva e Preventiva</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700">Descrição do Chamado</label>
-                <Textarea 
-                  placeholder="Descreva o problema informado pelo cliente"
-                  value={formData.reportedIssue}
-                  onChange={(e) => handleInputChange('reportedIssue', e.target.value)}
-                />
-              </div>
+              
               <div>
                 <label className="text-sm font-medium text-gray-700">Técnico Responsável</label>
                 <Select value={formData.technician} onValueChange={(value) => handleInputChange('technician', value)}>
@@ -318,12 +297,23 @@ export const Chamados: React.FC = () => {
                     <SelectValue placeholder="Selecione o técnico responsável" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="joao">João Silva</SelectItem>
-                    <SelectItem value="maria">Maria Santos</SelectItem>
+                    <SelectItem value="João Silva">João Silva</SelectItem>
+                    <SelectItem value="Maria Santos">Maria Santos</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               
+              {/* Campo 1: Descrição do Chamado (usado para 'subject') */}
+              <div>
+                <label className="text-sm font-medium text-gray-700">Descrição do Chamado</label>
+                <Textarea 
+                  placeholder="Descreva brevemente o chamado (assunto)"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                />
+              </div>
+              
+              {/* Campo 2: Defeito Informado (campo independente) */}
               <div>
                 <label className="text-sm font-medium text-gray-700">Defeito Informado</label>
                 <Textarea 
@@ -332,6 +322,8 @@ export const Chamados: React.FC = () => {
                   onChange={(e) => handleInputChange('reportedIssue', e.target.value)}
                 />
               </div>
+              
+              {/* Campo 3: Defeito Constatado (campo independente) */}
               <div>
                 <label className="text-sm font-medium text-gray-700">Defeito Constatado</label>
                 <Textarea 
@@ -340,6 +332,8 @@ export const Chamados: React.FC = () => {
                   onChange={(e) => handleInputChange('confirmedIssue', e.target.value)}
                 />
               </div>
+              
+              {/* Campo 4: Serviço Executado (campo independente) */}
               <div>
                 <label className="text-sm font-medium text-gray-700">Serviço Executado</label>
                 <Textarea 
@@ -412,45 +406,46 @@ export const Chamados: React.FC = () => {
                   />
                 </div>
               </div>
+              
               <div>
-  <label className="text-sm font-medium text-gray-700">Data</label>
-  <Input 
-    type="date" 
-    value={formData.date}
-    onChange={(e) => handleInputChange('date', e.target.value)}
-  />
-</div>
+                <label className="text-sm font-medium text-gray-700">Data</label>
+                <Input 
+                  type="date" 
+                  value={formData.date}
+                  onChange={(e) => handleInputChange('date', e.target.value)}
+                />
+              </div>
 
-{/* Áreas de assinatura */}
-<div className="grid grid-cols-2 gap-4 mt-6">
-  <div className="flex flex-col items-center">
-    <div className="w-full border-t border-gray-400 mb-1"></div>
-    <span className="text-xs text-gray-600">Assinatura do Técnico</span>
-  </div>
-  <div className="flex flex-col items-center">
-    <div className="w-full border-t border-gray-400 mb-1"></div>
-    <span className="text-xs text-gray-600">Assinatura do Cliente</span>
-  </div>
-</div>
+              {/* Áreas de assinatura */}
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                <div className="flex flex-col items-center">
+                  <div className="w-full border-t border-gray-400 mb-1"></div>
+                  <span className="text-xs text-gray-600">Assinatura do Técnico</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className="w-full border-t border-gray-400 mb-1"></div>
+                  <span className="text-xs text-gray-600">Assinatura do Cliente</span>
+                </div>
+              </div>
 
-<div className="flex justify-end gap-2 mt-6">
-  <Button variant="outline" onClick={() => window.print()}>
-    Imprimir
-  </Button>
-  <Button variant="outline" onClick={handleCloseDialog}>
-    Cancelar
-  </Button>
-  <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSave}>
-    Salvar
-  </Button>
-</div>
+              <div className="flex justify-end gap-2 mt-6">
+                <Button variant="outline" onClick={() => window.print()}>
+                  Imprimir
+                </Button>
+                <Button variant="outline" onClick={handleCloseDialog}>
+                  Cancelar
+                </Button>
+                <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSave}>
+                  Salvar
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      <div className="bg-white rounded-lg border border-border">
-        <div className="p-4 border-b border-border">
+      <div className="bg-white rounded-lg border border-gray-200">
+        <div className="p-4 border-b border-gray-200">
           <div className="flex gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -587,4 +582,4 @@ export const Chamados: React.FC = () => {
       </Dialog>
     </div>
   );
-};
+}
