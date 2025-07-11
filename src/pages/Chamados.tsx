@@ -130,7 +130,7 @@ export const Chamados: React.FC = () => {
     });
   };
 
-  /** ✅ Bloco de Assinaturas + Botões encapsulado */
+  /** ✅ Bloco Assinaturas + Botões */
   const AssinaturasEBotoes = () => (
     <>
       <div className="mt-12 grid grid-cols-2 gap-4">
@@ -153,24 +153,91 @@ export const Chamados: React.FC = () => {
 
   return (
     <div className="p-6">
-      {/* ... cabeçalho, tabela e outros trechos mantidos ... */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            <Plus size={16} className="mr-2" /> Novo Chamado
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{selectedTicket ? 'Editar Chamado' : 'Novo Chamado'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            {/* ... seus campos do formulário aqui (Combobox, Textarea, Select etc.) ... */}
-            {/* ✅ Inserir o bloco de assinaturas + botões no final */}
-            <AssinaturasEBotoes />
-          </div>
-        </DialogContent>
-      </Dialog>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Chamados</h1>
+          <p className="text-gray-600">Gerencie todos os chamados técnicos</p>
+        </div>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <Plus size={16} className="mr-2" /> Novo Chamado
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{selectedTicket ? 'Editar Chamado' : 'Novo Chamado'}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* ✅ Campos do formulário resumidos para exemplo */}
+              <Combobox
+                options={clientOptions}
+                value={formData.client}
+                onValueChange={(value) => handleInputChange('client', value)}
+                placeholder="Selecione o cliente"
+              />
+              <Input placeholder="Nº de OS" value={formData.osNumber} onChange={(e) => handleInputChange('osNumber', e.target.value)} />
+              <Textarea placeholder="Descrição do chamado" value={formData.description} onChange={(e) => handleInputChange('description', e.target.value)} />
+              {/* ... (demais campos que você já tinha) */}
+              {/* ✅ Inserir o bloco de assinaturas + botões */}
+              <AssinaturasEBotoes />
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* ✅ Busca e filtro */}
+      <div className="flex gap-4 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+          <Input placeholder="Buscar por cliente, assunto..." className="pl-10" />
+        </div>
+        <Select>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="Filtrar por status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos</SelectItem>
+            <SelectItem value="pendente">Pendente</SelectItem>
+            <SelectItem value="andamento">Em Andamento</SelectItem>
+            <SelectItem value="resolvido">Resolvido</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* ✅ Tabela */}
+      <div className="overflow-x-auto bg-white rounded-lg border">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cliente</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Assunto</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoria</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Técnico</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {tickets.map(ticket => (
+              <tr key={ticket.id}>
+                <td className="px-6 py-4 text-sm">{ticket.id}</td>
+                <td className="px-6 py-4 text-sm">{ticket.client}</td>
+                <td className="px-6 py-4 text-sm">{ticket.subject}</td>
+                <td className="px-6 py-4 text-sm">{ticket.category}</td>
+                <td className="px-6 py-4 text-sm">{ticket.technician}</td>
+                <td className="px-6 py-4 text-sm">
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
+                    {ticket.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm">{ticket.date}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
