@@ -72,7 +72,7 @@ export const Chamados: React.FC = () => {
   // Converter clientes para formato do Combobox
   const clientOptions = clients.map(client => ({
     value: client.name,
-    label: ${client.name} - ${client.city}
+    label: `${client.name} - ${client.city}`
   }));
 
   const getStatusColor = (status: string) => {
@@ -132,7 +132,7 @@ export const Chamados: React.FC = () => {
   };
 
   const handleDelete = async (ticket: Ticket) => {
-    if (window.confirm(Tem certeza que deseja excluir o chamado ${ticket.id}?)) {
+    if (window.confirm(`Tem certeza que deseja excluir o chamado ${ticket.id}?`)) {
       try {
         const { error } = await supabase
           .from('tickets')
@@ -412,46 +412,30 @@ export const Chamados: React.FC = () => {
                   />
                 </div>
               </div>
-              <div>
-  <label className="text-sm font-medium text-gray-700">Data</label>
-  <Input 
-    type="date" 
-    value={formData.date}
-    onChange={(e) => handleInputChange('date', e.target.value)}
-  />
-</div>
-<div className="space-y-4 print-area">
-  {/* ... campos anteriores do formulário ... */}
-  {/* Espaço extra antes das assinaturas */}
-  <div className="mt-12" />
-  {/* Áreas de assinatura */}
-<div className="grid grid-cols-2 gap-4 mt-12">
-  <div className="flex flex-col items-center">
-    <div className="w-full border-t border-gray-400 mb-1"></div>
-    <span className="text-xs text-gray-600">Assinatura do Técnico</span>
-  </div>
-  <div className="flex flex-col items-center">
-    <div className="w-full border-t border-gray-400 mb-1"></div>
-    <span className="text-xs text-gray-600">Assinatura do Cliente</span>
-  </div>
-</div>
 
-<div className="flex justify-end gap-2 mt-10 no-print">
-  <Button variant="outline" onClick={() => window.print()}>
-    Imprimir
-  </Button>
-  <Button variant="outline" onClick={handleCloseDialog}>
-    Cancelar
-  </Button>
-  <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSave}>
-    Salvar
-  </Button>
-</div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Data</label>
+                <Input 
+                  type="date" 
+                  value={formData.date}
+                  onChange={(e) => handleInputChange('date', e.target.value)}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={handleCloseDialog}>
+                  Cancelar
+                </Button>
+                <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSave}>
+                  Salvar
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
-    
-          <div className="bg-white rounded-lg border border-border">
+      </div>
+
+      <div className="bg-white rounded-lg border border-border">
         <div className="p-4 border-b border-border">
           <div className="flex gap-4">
             <div className="flex-1">
@@ -497,7 +481,7 @@ export const Chamados: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{ticket.category}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{ticket.technician}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
                       {ticket.status}
                     </span>
                   </td>
@@ -569,7 +553,7 @@ export const Chamados: React.FC = () => {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-700">Status</label>
-                  <p className={text-sm ${getStatusColor(selectedTicket.status)} px-2 py-1 rounded-full inline-block}>
+                  <p className={`text-sm ${getStatusColor(selectedTicket.status)} px-2 py-1 rounded-full inline-block`}>
                     {selectedTicket.status}
                   </p>
                 </div>
