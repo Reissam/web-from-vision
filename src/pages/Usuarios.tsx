@@ -6,8 +6,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, Search } from 'lucide-react';
 import { supabase, User } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
+import { sendInviteEmailGmail, sendInviteEmailViaGmailAPI } from '@/services/gmailService';
 
 export const Usuarios: React.FC = () => {
+  const { user: currentUser, canManageUsers, canCreateAdmin, canDeleteAdmin } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -16,8 +19,11 @@ export const Usuarios: React.FC = () => {
     email: '',
     role: '',
     department: '',
-    status: ''
+    status: '',
+    password: '',
+    confirmPassword: ''
   });
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -45,7 +51,9 @@ export const Usuarios: React.FC = () => {
       email: user.email,
       role: user.role,
       department: user.department,
-      status: user.status
+      status: user.status,
+      password: '',
+      confirmPassword: ''
     });
     setIsDialogOpen(true);
   };
@@ -71,43 +79,132 @@ export const Usuarios: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      const userData = {
-        name: formData.name,
-        email: formData.email,
-        role: formData.role,
-        department: formData.department,
-        status: formData.status,
-        updated_at: new Date().toISOString()
-      };
-
-      if (selectedUser) {
+      if (!selectedUser) {
+        // Gerar link de convite personalizado
+        const inviteData = {
+          name: formData.name,
+          email: formData.email,
+          role: formData.role,
+          department: formData.department,
+          status: formData.status
+        };
+        
+        // Criar link de convite com dados codificados
+        const baseUrl = window.location.origin;
+        const inviteLink = `${baseUrl}/invite?data=${encodeURIComponent(JSON.stringify(inviteData))}`;
+        
+        // Salvar dados do convite na tabela users (com status pendente)
+        const userData = {
+          name: formData.name,
+          email: formData.email,
+          role: formData.role,
+          department: formData.department,
+          status: 'Pendente',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        const { error } = await supabase.from('users').insert([userData]);
+        if (error) throw error;
+        
+        // Mostrar link de convite
+        const shouldCopy = window.confirm(
+          `Convite criado com sucesso!\n\nLink de convite: ${inviteLink}\n\nDeseja copiar o link para a área de transferência?`
+        );
+        
+        if (shouldCopy) {
+          navigator.clipboard.writeText(inviteLink);
+          toast.success('Link copiado para a área de transferência!');
+        }
+        
+        toast.success('Convite criado! Envie o link para o usuário.');
+      } else {
         // Atualizar usuário existente
-        const { error } = await supabase
-          .from('users')
-          .update(userData)
-          .eq('id', selectedUser.id);
-
+        const userData = {
+          name: formData.name,
+          email: formData.email,
+          role: formData.role,
+          department: formData.department,
+          status: formData.status,
+          updated_at: new Date().toISOString()
+        };
+        const { error } = await supabase.from('users').update(userData).eq('id', selectedUser.id);
         if (error) throw error;
         toast.success('Usuário atualizado com sucesso');
-      } else {
-        // Criar novo usuário
-        const { error } = await supabase
-          .from('users')
-          .insert([{
-            ...userData,
-            created_at: new Date().toISOString()
-          }]);
-
-        if (error) throw error;
-        toast.success('Usuário criado com sucesso');
       }
-
       setIsDialogOpen(false);
       setSelectedUser(null);
       fetchUsers();
     } catch (error) {
       console.error('Erro ao salvar usuário:', error);
       toast.error('Erro ao salvar usuário');
+    }
+  };
+
+  const handleSendInvite = async () => {
+    if (!formData.email) {
+      toast.error('Por favor, insira um endereço de e-mail.');
+      return;
+    }
+
+    if (!formData.name || !formData.role || !formData.department) {
+      toast.error('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    setIsSendingInvite(true);
+
+    try {
+      // Gerar link de convite personalizado
+      const inviteData = {
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+        department: formData.department,
+        status: formData.status
+      };
+      
+      const baseUrl = window.location.origin;
+      const inviteLink = `${baseUrl}/invite?data=${encodeURIComponent(JSON.stringify(inviteData))}`;
+      
+      // Enviar e-mail usando Gmail via backend
+      const emailResult = await sendInviteEmailViaGmailAPI({
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+        department: formData.department,
+        inviteLink: inviteLink
+      });
+
+      if (!emailResult.success) {
+        toast.error(`Erro ao enviar e-mail: ${emailResult.error}`);
+        return;
+      }
+
+      // Salvar dados do convite na tabela users (com status pendente)
+      const userData = {
+        name: formData.name,
+        email: formData.email,
+        role: formData.role,
+        department: formData.department,
+        status: 'Pendente',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      const { error } = await supabase.from('users').insert([userData]);
+      if (error) throw error;
+      
+      toast.success('Convite enviado com sucesso! Verifique o e-mail do usuário.');
+      setIsDialogOpen(false);
+      setSelectedUser(null);
+      fetchUsers();
+      
+    } catch (error) {
+      console.error('Erro ao enviar convite:', error);
+      toast.error('Erro ao enviar convite');
+    } finally {
+      setIsSendingInvite(false);
     }
   };
 
@@ -131,13 +228,14 @@ export const Usuarios: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Usuários</h1>
           <p className="text-gray-600">Gerencie os usuários do sistema</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus size={16} className="mr-2" />
-              Novo Usuário
-            </Button>
-          </DialogTrigger>
+        {canManageUsers() && (
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus size={16} className="mr-2" />
+                Novo Usuário
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>{selectedUser ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
@@ -169,7 +267,9 @@ export const Usuarios: React.FC = () => {
                       <SelectValue placeholder="Selecione uma função" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Administrador">Administrador</SelectItem>
+                      {canCreateAdmin() && (
+                        <SelectItem value="Administrador">Administrador</SelectItem>
+                      )}
                       <SelectItem value="Técnico">Técnico</SelectItem>
                       <SelectItem value="Gestor">Gestor</SelectItem>
                     </SelectContent>
@@ -205,11 +305,23 @@ export const Usuarios: React.FC = () => {
                     email: '',
                     role: '',
                     department: '',
-                    status: ''
+                    status: '',
+                    password: '',
+                    confirmPassword: ''
                   });
                 }}>
                   Cancelar
                 </Button>
+                {!selectedUser && (
+                  <Button 
+                    variant="outline" 
+                    onClick={handleSendInvite}
+                    disabled={isSendingInvite}
+                    className="bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    {isSendingInvite ? 'Enviando...' : 'Enviar Convite'}
+                  </Button>
+                )}
                 <Button className="bg-blue-600 hover:bg-blue-700" onClick={handleSave}>
                   Salvar
                 </Button>
@@ -217,6 +329,7 @@ export const Usuarios: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="bg-white rounded-lg border border-border">
@@ -253,20 +366,24 @@ export const Usuarios: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEdit(user)}
-                      >
-                        Editar
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleDelete(user)}
-                      >
-                        Excluir
-                      </Button>
+                      {canManageUsers() && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEdit(user)}
+                        >
+                          Editar
+                        </Button>
+                      )}
+                      {canManageUsers() && (user.role !== 'Administrador' || canDeleteAdmin()) && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDelete(user)}
+                        >
+                          Excluir
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>

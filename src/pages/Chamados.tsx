@@ -10,8 +10,10 @@ import { Plus, Search, MoreHorizontal } from 'lucide-react';
 import { supabase, Ticket, Client } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Combobox } from '@/components/ui/combobox';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const Chamados: React.FC = () => {
+  const { canEditTickets, canDeleteTickets } = useAuth();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -221,6 +223,191 @@ export const Chamados: React.FC = () => {
     });
   };
 
+  const handlePrint = () => {
+    // Criar uma nova janela para impressão
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    // Obter os valores dos campos
+    const printData = {
+      cliente: formData.client,
+      osNumber: formData.osNumber,
+      tipo: formData.type,
+      tecnico: formData.technician,
+      descricao: formData.description,
+      defeitoInformado: formData.reportedIssue,
+      defeitoConstatado: formData.confirmedIssue,
+      servicoExecutado: formData.servicePerformed,
+      status: formData.status,
+      prioridade: formData.priority,
+      horaChegada: formData.arrivalTime,
+      horaSaida: formData.departureTime,
+      data: formData.date
+    };
+
+    // Informações do cliente selecionado
+    const clienteInfo = selectedClient ? {
+      nome: selectedClient.name,
+      cidade: selectedClient.city,
+      telefone: selectedClient.phone || 'Não informado',
+      email: selectedClient.email || 'Não informado',
+      unidade: selectedClient.unit || 'Não informado'
+    } : null;
+
+    // HTML para impressão
+    const printHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Chamado Técnico - Impressão</title>
+        <style>
+          @media print {
+            body { margin: 0; padding: 15px; font-family: Arial, sans-serif; }
+            .no-print { display: none !important; }
+            .print-header { text-align: center; margin-bottom: 15px; border-bottom: 1px solid #000; padding-bottom: 5px; }
+            .print-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; }
+            .print-subtitle { font-size: 12px; color: #666; }
+            .field-group { margin-bottom: 12px; }
+            .field-label { font-weight: bold; font-size: 11px; color: #333; margin-bottom: 3px; }
+            .field-value { font-size: 11px; color: #000; margin-bottom: 8px; padding: 4px; border: 1px solid #ddd; background-color: #f9f9f9; min-height: 16px; }
+            .field-value:empty::after { content: "Não preenchido"; color: #999; font-style: italic; }
+            .two-columns { display: flex; gap: 15px; }
+            .column { flex: 1; }
+            .signature-section { margin-top: 20px; display: flex; justify-content: space-between; }
+            .signature-box { width: 45%; text-align: center; }
+            .signature-line { border-top: 1px solid #000; margin-top: 30px; padding-top: 3px; font-size: 10px; }
+            .page-break { page-break-before: always; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-header">
+          <div class="print-title">CHAMADO TÉCNICO</div>
+          <div class="print-subtitle">Sistema de Gerenciamento de Chamados</div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">CLIENTE:</div>
+          <div class="field-value">${printData.cliente || 'Não selecionado'}</div>
+        </div>
+
+        ${clienteInfo ? `
+        <div class="field-group">
+          <div class="field-label">INFORMAÇÕES DO CLIENTE:</div>
+          <div class="two-columns">
+            <div class="column">
+              <div class="field-label">Nome:</div>
+              <div class="field-value">${clienteInfo.nome}</div>
+            </div>
+            <div class="column">
+              <div class="field-label">Cidade:</div>
+              <div class="field-value">${clienteInfo.cidade}</div>
+            </div>
+          </div>
+          <div class="two-columns">
+            <div class="column">
+              <div class="field-label">Telefone:</div>
+              <div class="field-value">${clienteInfo.telefone}</div>
+            </div>
+            <div class="column">
+              <div class="field-label">E-mail:</div>
+              <div class="field-value">${clienteInfo.email}</div>
+            </div>
+          </div>
+          <div class="field-label">Unidade:</div>
+          <div class="field-value">${clienteInfo.unidade}</div>
+        </div>
+        ` : ''}
+
+        <div class="two-columns">
+          <div class="column">
+            <div class="field-label">Nº DE OS:</div>
+            <div class="field-value">${printData.osNumber}</div>
+          </div>
+          <div class="column">
+            <div class="field-label">DATA:</div>
+            <div class="field-value">${printData.data}</div>
+          </div>
+        </div>
+
+        <div class="two-columns">
+          <div class="column">
+            <div class="field-label">TIPO DE CHAMADO:</div>
+            <div class="field-value">${printData.tipo}</div>
+          </div>
+          <div class="column">
+            <div class="field-label">TÉCNICO RESPONSÁVEL:</div>
+            <div class="field-value">${printData.tecnico}</div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">DESCRIÇÃO DO CHAMADO:</div>
+          <div class="field-value">${printData.descricao}</div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">DEFEITO INFORMADO:</div>
+          <div class="field-value">${printData.defeitoInformado}</div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">DEFEITO CONSTATADO:</div>
+          <div class="field-value">${printData.defeitoConstatado}</div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">SERVIÇO EXECUTADO:</div>
+          <div class="field-value">${printData.servicoExecutado}</div>
+        </div>
+
+        <div class="two-columns">
+          <div class="column">
+            <div class="field-label">STATUS:</div>
+            <div class="field-value">${printData.status}</div>
+          </div>
+          <div class="column">
+            <div class="field-label">PRIORIDADE:</div>
+            <div class="field-value">${printData.prioridade}</div>
+          </div>
+        </div>
+
+        <div class="two-columns">
+          <div class="column">
+            <div class="field-label">HORA CHEGADA:</div>
+            <div class="field-value">${printData.horaChegada}</div>
+          </div>
+          <div class="column">
+            <div class="field-label">HORA SAÍDA:</div>
+            <div class="field-value">${printData.horaSaida}</div>
+          </div>
+        </div>
+
+        <div class="signature-section">
+          <div class="signature-box">
+            <div class="signature-line">Assinatura do Técnico</div>
+          </div>
+          <div class="signature-box">
+            <div class="signature-line">Assinatura do Cliente</div>
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+            window.onafterprint = function() {
+              window.close();
+            };
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printHTML);
+    printWindow.document.close();
+  };
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -228,13 +415,14 @@ export const Chamados: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Chamados</h1>
           <p className="text-gray-600">Gerencie todos os chamados técnicos</p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
-              <Plus size={16} className="mr-2" />
-              Novo Chamado
-            </Button>
-          </DialogTrigger>
+        {canEditTickets() && (
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus size={16} className="mr-2" />
+                Novo Chamado
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{selectedTicket ? 'Editar Chamado' : 'Novo Chamado'}</DialogTitle>
@@ -272,8 +460,8 @@ export const Chamados: React.FC = () => {
                         <p className="text-gray-900">{selectedClient.email || 'Não informado'}</p>
                       </div>
                       <div className="col-span-2">
-                        <span className="font-medium text-gray-700">Endereço:</span>
-                        <p className="text-gray-900">{selectedClient.address || 'Não informado'}</p>
+                        <span className="font-medium text-gray-700">Unidade:</span>
+                        <p className="text-gray-900">{selectedClient.unit || 'Não informado'}</p>
                       </div>
                     </div>
                   </div>
@@ -443,7 +631,7 @@ export const Chamados: React.FC = () => {
               </div>
 
               <div className="flex justify-end gap-2 mt-6">
-                <Button variant="outline" onClick={() => window.print()}>
+                <Button variant="outline" onClick={handlePrint}>
                   Imprimir
                 </Button>
                 <Button variant="outline" onClick={handleCloseDialog}>
@@ -456,6 +644,7 @@ export const Chamados: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200">
@@ -518,20 +707,24 @@ export const Chamados: React.FC = () => {
                       >
                         Detalhes
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleEdit(ticket)}
-                      >
-                        Editar
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => handleDelete(ticket)}
-                      >
-                        Excluir
-                      </Button>
+                      {canEditTickets() && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleEdit(ticket)}
+                        >
+                          Editar
+                        </Button>
+                      )}
+                      {canDeleteTickets() && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDelete(ticket)}
+                        >
+                          Excluir
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>

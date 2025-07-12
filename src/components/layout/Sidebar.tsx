@@ -9,6 +9,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SidebarProps {
   activeRoute: string;
@@ -17,19 +18,20 @@ interface SidebarProps {
   onToggleCollapse: () => void;
 }
 
-const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', route: 'dashboard' },
-  { icon: Ticket, label: 'Chamados', route: 'chamados' },
-  { icon: Users, label: 'Clientes', route: 'clientes' },
-  { icon: UserCog, label: 'Usuários', route: 'usuarios' },
-];
-
 export const Sidebar: React.FC<SidebarProps> = ({
   activeRoute,
   onNavigate,
   collapsed,
   onToggleCollapse
 }) => {
+  const { user, canManageUsers, canManageClients } = useAuth();
+
+  const menuItems = [
+    { icon: LayoutDashboard, label: 'Dashboard', route: 'dashboard' },
+    { icon: Ticket, label: 'Chamados', route: 'chamados' },
+    ...(canManageClients() ? [{ icon: Users, label: 'Clientes', route: 'clientes' }] : []),
+    ...(canManageUsers() ? [{ icon: UserCog, label: 'Usuários', route: 'usuarios' }] : []),
+  ];
   return (
     <div className={cn(
       "bg-white border-r border-border h-screen transition-all duration-300 flex flex-col",
@@ -71,15 +73,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* User Info */}
-      {!collapsed && (
+      {!collapsed && user && user.name && (
         <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 text-sm font-semibold">JS</span>
+              <span className="text-blue-600 text-sm font-semibold">
+                {user.name
+                  ? user.name.split(' ').map(n => n[0]).join('').toUpperCase()
+                  : ''}
+              </span>
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">João Silva</p>
-              <p className="text-xs text-gray-500">Administrador</p>
+              <p className="text-sm font-medium text-gray-900">{user.name}</p>
+              <p className="text-xs text-gray-500">{user.role}</p>
             </div>
           </div>
         </div>

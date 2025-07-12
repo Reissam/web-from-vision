@@ -151,17 +151,53 @@ src/
 - `npm run lint` - Executa ESLint
 - `npm run setup:supabase` - Configuração automatizada do Supabase
 
+## 📧 Envio Automático de E-mails
+
+O sistema agora inclui envio automático de convites por e-mail via Gmail.
+
+### Configuração do Backend de E-mail
+
+1. **Configure o backend:**
+   ```bash
+   cd backend
+   npm run setup
+   ```
+
+2. **Siga as instruções para:**
+   - Configurar Gmail com App Password
+   - Definir variáveis de ambiente
+   - Testar a conexão
+
+3. **Inicie o servidor de e-mail:**
+   ```bash
+   npm run dev
+   ```
+
+4. **Teste o envio:**
+   - Acesse a página de Usuários
+   - Crie um novo usuário
+   - Clique em "Enviar Convite"
+   - O e-mail será enviado automaticamente
+
+### Funcionalidades do E-mail
+- ✅ Template HTML profissional
+- ✅ Dados do usuário incluídos
+- ✅ Link de ativação seguro
+- ✅ Design responsivo
+- ✅ Logs detalhados
+
 ## 🚀 Deploy
 
-### Vercel (Recomendado)
-1. Conecte seu repositório ao Vercel
+### Frontend (Vercel/Netlify)
+1. Conecte seu repositório
 2. Configure as variáveis de ambiente
 3. Deploy automático
 
-### Netlify
-1. Conecte seu repositório ao Netlify
-2. Configure as variáveis de ambiente
-3. Deploy automático
+### Backend de E-mail
+1. Configure as variáveis de ambiente
+2. Use PM2 ou similar para manter o processo ativo
+3. Configure proxy reverso (nginx)
+4. Use HTTPS
 
 ## 📝 Licença
 

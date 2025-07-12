@@ -8,31 +8,25 @@ import { Login } from './Login';
 import { Button } from '@/components/ui/button';
 import { LogOut, User } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  department: string;
-  status: string;
-}
+import { useAuth } from '@/contexts/AuthContext';
 
 const Index = () => {
   const [activeRoute, setActiveRoute] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const { user, login, logout } = useAuth();
 
-  const handleLogin = (userData: User) => {
-    setUser(userData);
+  const handleLogin = (userData: any) => {
+    login(userData);
     toast.success(`Bem-vindo, ${userData.name}!`);
   };
 
   const handleLogout = () => {
-    setUser(null);
+    logout();
     setActiveRoute('dashboard');
     toast.success('Logout realizado com sucesso!');
   };
+
+  const { canManageUsers, canManageClients } = useAuth();
 
   const renderContent = () => {
     switch (activeRoute) {
@@ -41,9 +35,9 @@ const Index = () => {
       case 'chamados':
         return <Chamados />;
       case 'clientes':
-        return <Clientes />;
+        return canManageClients() ? <Clientes /> : <Dashboard />;
       case 'usuarios':
-        return <Usuarios />;
+        return canManageUsers() ? <Usuarios /> : <Dashboard />;
       default:
         return <Dashboard />;
     }
