@@ -113,7 +113,7 @@ export const sendInviteEmailGmail = async (inviteData: InviteData): Promise<{ su
 export const sendInviteEmailViaGmailAPI = async (inviteData: InviteData): Promise<{ success: boolean; error?: string }> => {
   try {
     // Esta função seria chamada para uma API backend que usa Gmail
-    const response = await fetch('http://localhost:3001/api/send-invite-gmail', {
+    const response = await fetch('https://sistema-de-chamados-sigma.vercel.app/api/send-invite-gmail', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
