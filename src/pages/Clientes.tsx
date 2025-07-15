@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Plus, Search } from 'lucide-react';
 import { supabase, Client } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -138,9 +138,12 @@ export const Clientes: React.FC = () => {
               Novo Cliente
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl" aria-describedby="descricao-dialogo-cliente">
             <DialogHeader>
               <DialogTitle>{selectedClient ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle>
+              <DialogDescription id="descricao-dialogo-cliente">
+                Preencha os dados do cliente e salve para registrar ou atualizar.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div>
